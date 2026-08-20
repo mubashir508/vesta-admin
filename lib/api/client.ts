@@ -71,7 +71,7 @@ export type AdminHostelListing = {
   slug: string;
   name: string;
   description: string;
-  gender: 'BOYS' | 'GIRLS' | 'CO_LIVING';
+  gender: 'MALE' | 'FEMALE';
   status: HostelListingStatus;
   contactPhone: string;
   whatsappNumber: string | null;

@@ -36,12 +36,12 @@ export default function AdminDashboardPage() {
             Browse registered guests, hosts, and profile completion status.
           </p>
         </Link>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-zinc-900">Verification</h2>
+        <Link href="/listings" className="rounded-2xl border border-zinc-200 bg-white p-6 transition hover:border-zinc-400">
+          <h2 className="text-lg font-semibold text-zinc-900">Hostel listings</h2>
           <p className="mt-2 text-sm text-zinc-600">
-            Owner document & listing approval arrives in phase 2.
+            View every listing and review owner submissions and verification documents.
           </p>
-        </div>
+        </Link>
       </div>
     </AdminShell>
   );

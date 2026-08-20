@@ -11,7 +11,8 @@ import {
   type HostelListingStatus,
 } from '@/lib/api/client';
 
-const TABS: { value: HostelListingStatus; label: string }[] = [
+const TABS: { value: HostelListingStatus | undefined; label: string }[] = [
+  { value: undefined, label: 'All listings' },
   { value: 'PENDING_REVIEW', label: 'Pending review' },
   { value: 'PUBLISHED', label: 'Published' },
   { value: 'REJECTED', label: 'Rejected' },
@@ -20,7 +21,7 @@ const TABS: { value: HostelListingStatus; label: string }[] = [
 export default function AdminListingsPage() {
   const router = useRouter();
   const { isAdmin, isLoading, accessToken } = useAdminAuth();
-  const [status, setStatus] = useState<HostelListingStatus>('PENDING_REVIEW');
+  const [status, setStatus] = useState<HostelListingStatus | undefined>();
   const [listings, setListings] = useState<AdminHostelListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -61,7 +62,7 @@ export default function AdminListingsPage() {
       <div className="mb-4 flex gap-1">
         {TABS.map((tab) => (
           <button
-            key={tab.value}
+            key={tab.value ?? 'ALL'}
             type="button"
             onClick={() => setStatus(tab.value)}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
@@ -113,7 +114,9 @@ export default function AdminListingsPage() {
                       >
                         {listing.name}
                       </Link>
-                      <div className="text-xs text-zinc-500">{listing.gender}</div>
+                      <div className="text-xs text-zinc-500">
+                        {listing.gender === 'MALE' ? 'Male' : 'Female'} · {listing.status.toLowerCase().replaceAll('_', ' ')}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-700">
                       {listing.owner.profile?.fullName || '—'}
