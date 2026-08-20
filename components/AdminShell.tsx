@@ -13,6 +13,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const links = [
     { href: '/', label: 'Overview' },
     { href: '/users', label: 'Users' },
+    { href: '/listings', label: 'Listings' },
   ];
 
   return (

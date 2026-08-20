@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { useAdminAuth } from '@/components/AdminAuthProvider';
-import { ApiError } from '@/lib/api/client';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -28,7 +27,7 @@ export default function AdminLoginPage() {
       router.replace('/');
       router.refresh();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -47,7 +46,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-bold text-zinc-900">Vesta Admin</h1>
         <p className="mt-2 text-sm text-zinc-500">
-          Super-admin verification panel. Owner management stays in vesta-web /host.
+          Super-admin verification panel. Owner management is handled in Vesta Owner.
         </p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block">

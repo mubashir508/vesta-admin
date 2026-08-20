@@ -1,4 +1,10 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vesta Admin
+
+Authentication uses NextAuth's encrypted JWT session strategy. Backend access
+and rotating refresh tokens remain inside a panel-specific HttpOnly session
+cookie. The API verifies the `ADMIN` capability on login, token refresh, and
+every protected admin endpoint. Configure a strong `AUTH_SECRET` using
+`.env.example` in every environment.
 
 ## Getting Started
 

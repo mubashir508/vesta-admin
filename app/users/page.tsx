@@ -11,7 +11,7 @@ import {
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const { isAdmin, isLoading } = useAdminAuth();
+  const { isAdmin, isLoading, accessToken } = useAdminAuth();
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -26,10 +26,9 @@ export default function AdminUsersPage() {
   }, [isAdmin, isLoading, router]);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || !accessToken) return;
 
-    setLoading(true);
-    void fetchAdminUsers(page, limit)
+    void fetchAdminUsers(accessToken, page, limit)
       .then((data) => {
         setUsers(data.users);
         setTotal(data.total);
@@ -37,7 +36,7 @@ export default function AdminUsersPage() {
       })
       .catch(() => setError('Failed to load users'))
       .finally(() => setLoading(false));
-  }, [isAdmin, page]);
+  }, [isAdmin, accessToken, page]);
 
   if (isLoading || !isAdmin) {
     return (
@@ -144,7 +143,7 @@ export default function AdminUsersPage() {
           <button
             type="button"
             disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => { setLoading(true); setPage((p) => Math.max(1, p - 1)); }}
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm disabled:opacity-40"
           >
             Previous
@@ -152,7 +151,7 @@ export default function AdminUsersPage() {
           <button
             type="button"
             disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
+            onClick={() => { setLoading(true); setPage((p) => p + 1); }}
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm disabled:opacity-40"
           >
             Next
