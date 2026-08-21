@@ -10,6 +10,7 @@ import {
   type AdminHostelListing,
   type HostelListingStatus,
 } from '@/lib/api/client';
+import { Alert, Badge, Card, EmptyState, PageHeader, Spinner } from '@/components/ui';
 
 const TABS: { value: HostelListingStatus | undefined; label: string }[] = [
   { value: undefined, label: 'All listings' },
@@ -17,6 +18,13 @@ const TABS: { value: HostelListingStatus | undefined; label: string }[] = [
   { value: 'PUBLISHED', label: 'Published' },
   { value: 'REJECTED', label: 'Rejected' },
 ];
+
+function statusTone(status: string): 'positive' | 'warning' | 'negative' | 'neutral' {
+  if (status === 'PUBLISHED') return 'positive';
+  if (status === 'REJECTED') return 'negative';
+  if (status === 'PENDING_REVIEW') return 'warning';
+  return 'neutral';
+}
 
 export default function AdminListingsPage() {
   const router = useRouter();
@@ -44,30 +52,26 @@ export default function AdminListingsPage() {
 
   if (isLoading || !isAdmin) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <p className="text-sm text-zinc-500">Loading...</p>
+      <main className="flex min-h-screen items-center justify-center gap-2.5 bg-zinc-50 text-zinc-400">
+        <Spinner className="h-5 w-5" />
+        <p className="text-sm font-medium">Loading...</p>
       </main>
     );
   }
 
   return (
     <AdminShell>
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-zinc-900">Hostel listings</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          Verify owner-submitted documents before a listing goes live.
-        </p>
-      </div>
+      <PageHeader title="Hostel listings" description="Verify owner-submitted documents before a listing goes live." />
 
-      <div className="mb-4 flex gap-1">
+      <div className="mt-6 flex gap-1">
         {TABS.map((tab) => (
           <button
             key={tab.value ?? 'ALL'}
             type="button"
             onClick={() => setStatus(tab.value)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+            className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
               status === tab.value
-                ? 'bg-zinc-900 text-white'
+                ? 'bg-zinc-950 text-white'
                 : 'bg-white text-zinc-600 hover:bg-zinc-100'
             }`}
           >
@@ -76,9 +80,9 @@ export default function AdminListingsPage() {
         ))}
       </div>
 
-      {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+      {error ? <div className="mt-4"><Alert tone="error">{error}</Alert></div> : null}
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      <Card className="mt-4 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
@@ -93,29 +97,29 @@ export default function AdminListingsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
-                    Loading listings...
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-zinc-100 last:border-0">
+                    <td colSpan={6} className="px-4 py-4"><div className="h-4 w-full max-w-md animate-pulse rounded bg-zinc-100" /></td>
+                  </tr>
+                ))
               ) : listings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
-                    Nothing here
-                  </td>
+                  <td colSpan={6}><EmptyState icon="🗂️" title="Nothing here" /></td>
                 </tr>
               ) : (
                 listings.map((listing) => (
-                  <tr key={listing.id} className="border-b border-zinc-100 last:border-0">
+                  <tr key={listing.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/60">
                     <td className="px-4 py-3">
                       <Link
                         href={`/listings/${listing.id}`}
-                        className="font-medium text-zinc-900 hover:underline"
+                        className="font-semibold text-zinc-900 hover:underline"
                       >
                         {listing.name}
                       </Link>
-                      <div className="text-xs text-zinc-500">
-                        {listing.gender === 'MALE' ? 'Male' : 'Female'} · {listing.status.toLowerCase().replaceAll('_', ' ')}
+                      <div className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+                        <span>{listing.gender === 'MALE' ? 'Male' : 'Female'}</span>
+                        <span>·</span>
+                        <Badge tone={statusTone(listing.status)}>{listing.status.replaceAll('_', ' ')}</Badge>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-700">
@@ -135,7 +139,7 @@ export default function AdminListingsPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </AdminShell>
   );
 }

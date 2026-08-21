@@ -1,13 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useAdminAuth } from '@/components/AdminAuthProvider';
 import { AdminShell } from '@/components/AdminShell';
 import {
   fetchAdminUsers,
   type AdminUserRow,
 } from '@/lib/api/client';
+import { Alert, Badge, Button, Card, EmptyState, PageHeader, Spinner } from '@/components/ui';
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -40,8 +41,9 @@ export default function AdminUsersPage() {
 
   if (isLoading || !isAdmin) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <p className="text-sm text-zinc-500">Loading...</p>
+      <main className="flex min-h-screen items-center justify-center gap-2.5 bg-zinc-50 text-zinc-400">
+        <Spinner className="h-5 w-5" />
+        <p className="text-sm font-medium">Loading...</p>
       </main>
     );
   }
@@ -50,16 +52,11 @@ export default function AdminUsersPage() {
 
   return (
     <AdminShell>
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-zinc-900">Users</h2>
-          <p className="mt-1 text-sm text-zinc-500">{total} registered accounts</p>
-        </div>
-      </div>
+      <PageHeader title="Users" description={`${total} registered accounts`} />
 
-      {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+      {error ? <div className="mt-4"><Alert tone="error">{error}</Alert></div> : null}
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      <Card className="mt-6 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
@@ -74,22 +71,20 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
-                    Loading users...
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-zinc-100 last:border-0">
+                    <td colSpan={6} className="px-4 py-4"><div className="h-4 w-full max-w-md animate-pulse rounded bg-zinc-100" /></td>
+                  </tr>
+                ))
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
-                    No users yet
-                  </td>
+                  <td colSpan={6}><EmptyState icon="👤" title="No users yet" /></td>
                 </tr>
               ) : (
                 users.map((user) => (
-                  <tr key={user.id} className="border-b border-zinc-100 last:border-0">
+                  <tr key={user.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/60">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-zinc-900">
+                      <div className="font-semibold text-zinc-900">
                         {user.fullName || '—'}
                       </div>
                       <div className="text-xs text-zinc-500">{user.email}</div>
@@ -97,32 +92,19 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3 text-zinc-700">{user.city || '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        <Badge ok={user.tierAComplete}>Tier A</Badge>
-                        <Badge ok={user.tierBComplete}>Tier B</Badge>
+                        <Badge tone={user.tierAComplete ? 'positive' : 'neutral'}>Tier A</Badge>
+                        <Badge tone={user.tierBComplete ? 'positive' : 'neutral'}>Tier B</Badge>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex max-w-xs flex-wrap gap-1">
                         {user.capabilities.map((cap) => (
-                          <span
-                            key={cap}
-                            className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700"
-                          >
-                            {cap.replaceAll('_', ' ')}
-                          </span>
+                          <Badge key={cap} tone="neutral">{cap.replaceAll('_', ' ')}</Badge>
                         ))}
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                          user.isActive
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-red-50 text-red-700'
-                        }`}
-                      >
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      <Badge tone={user.isActive ? 'positive' : 'negative'}>{user.isActive ? 'Active' : 'Inactive'}</Badge>
                     </td>
                     <td className="px-4 py-3 text-zinc-600">
                       {new Date(user.createdAt).toLocaleDateString()}
@@ -133,43 +115,31 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-500">
           Page {page} of {totalPages}
         </p>
         <div className="flex gap-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            className="px-3 py-1.5"
             disabled={page <= 1}
             onClick={() => { setLoading(true); setPage((p) => Math.max(1, p - 1)); }}
-            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm disabled:opacity-40"
           >
             Previous
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
+            className="px-3 py-1.5"
             disabled={page >= totalPages}
             onClick={() => { setLoading(true); setPage((p) => p + 1); }}
-            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm disabled:opacity-40"
           >
             Next
-          </button>
+          </Button>
         </div>
       </div>
     </AdminShell>
-  );
-}
-
-function Badge({ ok, children }: { ok: boolean; children: ReactNode }) {
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-        ok ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'
-      }`}
-    >
-      {children}
-    </span>
   );
 }

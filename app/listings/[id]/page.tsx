@@ -12,9 +12,17 @@ import {
   reviewHostelListing,
   type AdminHostelListing,
 } from '@/lib/api/client';
+import { Alert, BackLink, Badge, Button, Card, Spinner, Textarea } from '@/components/ui';
 
 function formatLabel(value: string) {
   return value.toLowerCase().replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function statusTone(status: string): 'positive' | 'warning' | 'negative' | 'neutral' {
+  if (status === 'PUBLISHED') return 'positive';
+  if (status === 'REJECTED') return 'negative';
+  if (status === 'PENDING_REVIEW') return 'warning';
+  return 'neutral';
 }
 
 export default function AdminListingDetailPage() {
@@ -76,8 +84,9 @@ export default function AdminListingDetailPage() {
 
   if (isLoading || !isAdmin || loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <p className="text-sm text-zinc-500">Loading...</p>
+      <main className="flex min-h-screen items-center justify-center gap-2.5 bg-zinc-50 text-zinc-400">
+        <Spinner className="h-5 w-5" />
+        <p className="text-sm font-medium">Loading...</p>
       </main>
     );
   }
@@ -85,7 +94,7 @@ export default function AdminListingDetailPage() {
   if (!listing) {
     return (
       <AdminShell>
-        <p className="text-sm text-red-600">{error || 'Listing not found'}</p>
+        <Alert tone="error">{error || 'Listing not found'}</Alert>
         <Link href="/listings" className="mt-4 inline-block text-sm text-zinc-600 hover:underline">
           ← Back to listings
         </Link>
@@ -97,13 +106,11 @@ export default function AdminListingDetailPage() {
 
   return (
     <AdminShell>
-      <Link href="/listings" className="text-sm text-zinc-500 hover:text-zinc-900">
-        ← Back to listings
-      </Link>
+      <BackLink href="/listings">Back to listings</BackLink>
 
-      <div className="mt-3 flex items-start justify-between gap-4">
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-900">{listing.name}</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-950">{listing.name}</h2>
           <p className="mt-1 text-sm text-zinc-500">
             {listing.addressLine}, {listing.area}, {listing.city}, {listing.province}
           </p>
@@ -111,13 +118,13 @@ export default function AdminListingDetailPage() {
             Owner: {listing.owner.profile?.fullName || '—'} · {listing.contactPhone}
           </p>
         </div>
-        <StatusBadge status={listing.status} />
+        <Badge tone={statusTone(listing.status)}>{formatLabel(listing.status)}</Badge>
       </div>
 
-      {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+      {error ? <div className="mt-4"><Alert tone="error">{error}</Alert></div> : null}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-8">
+        <div className="space-y-6">
           <Section title="Description">
             <p className="whitespace-pre-line text-sm text-zinc-700">{listing.description}</p>
           </Section>
@@ -126,6 +133,7 @@ export default function AdminListingDetailPage() {
             {listing.images.length ? (
               <div className="grid grid-cols-3 gap-3">
                 {listing.images.map((image) => (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={image.storageKey}
                     src={image.url}
@@ -145,14 +153,14 @@ export default function AdminListingDetailPage() {
                 {listing.documents.map((doc) => (
                   <li key={doc.storageKey} className="flex items-center justify-between py-2.5">
                     <span className="text-sm text-zinc-700">{doc.label}</span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      className="px-3 py-1.5 text-xs"
+                      loading={docLoading === doc.storageKey}
                       onClick={() => void handleViewDocument(doc.storageKey)}
-                      disabled={docLoading === doc.storageKey}
-                      className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
                     >
-                      {docLoading === doc.storageKey ? 'Opening...' : 'View document'}
-                    </button>
+                      {docLoading === doc.storageKey ? 'Opening' : 'View document'}
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -167,16 +175,8 @@ export default function AdminListingDetailPage() {
                 {listing.rooms.map((room) => (
                   <div key={room.id} className="rounded-xl border border-zinc-200 p-4">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-zinc-900">{room.name}</p>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                          room.isPublished
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-zinc-100 text-zinc-500'
-                        }`}
-                      >
-                        {room.isPublished ? 'Published' : 'Not published'}
-                      </span>
+                      <p className="font-semibold text-zinc-950">{room.name}</p>
+                      <Badge tone={room.isPublished ? 'positive' : 'neutral'}>{room.isPublished ? 'Published' : 'Not published'}</Badge>
                     </div>
                     <p className="mt-1 text-sm text-zinc-500">
                       {formatLabel(room.occupancy)} · {formatLabel(room.bathroomType)} bath ·{' '}
@@ -195,35 +195,25 @@ export default function AdminListingDetailPage() {
           </Section>
         </div>
 
-        <aside className="h-fit rounded-2xl border border-zinc-200 bg-white p-5">
-          <h3 className="text-sm font-semibold text-zinc-900">Review decision</h3>
-          <textarea
+        <Card className="h-fit p-5">
+          <h3 className="text-sm font-bold text-zinc-950">Review decision</h3>
+          <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes for the owner (optional for approval, recommended for rejection)"
             rows={4}
             maxLength={1000}
             disabled={!canReview}
-            className="mt-3 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-50 disabled:text-zinc-400"
+            className="mt-3 disabled:bg-zinc-50 disabled:text-zinc-400"
           />
           {canReview ? (
             <div className="mt-3 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => void handleReview('PUBLISHED')}
-                disabled={submitting !== null}
-                className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
-              >
-                {submitting === 'PUBLISHED' ? 'Approving...' : 'Approve & publish'}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleReview('REJECTED')}
-                disabled={submitting !== null}
-                className="w-full rounded-xl border border-red-300 px-4 py-2.5 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-60"
-              >
-                {submitting === 'REJECTED' ? 'Rejecting...' : 'Reject'}
-              </button>
+              <Button variant="positive" className="w-full" loading={submitting === 'PUBLISHED'} disabled={submitting !== null} onClick={() => void handleReview('PUBLISHED')}>
+                {submitting === 'PUBLISHED' ? 'Approving' : 'Approve & publish'}
+              </Button>
+              <Button variant="danger" className="w-full" loading={submitting === 'REJECTED'} disabled={submitting !== null} onClick={() => void handleReview('REJECTED')}>
+                {submitting === 'REJECTED' ? 'Rejecting' : 'Reject'}
+              </Button>
             </div>
           ) : (
             <p className="mt-3 text-xs text-zinc-500">
@@ -231,7 +221,7 @@ export default function AdminListingDetailPage() {
               submissions can be reviewed.
             </p>
           )}
-        </aside>
+        </Card>
       </div>
     </AdminShell>
   );
@@ -239,24 +229,9 @@ export default function AdminListingDetailPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-6">
+    <Card className="p-6">
       <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>
       <div className="mt-3">{children}</div>
-    </section>
-  );
-}
-
-function StatusBadge({ status }: { status: AdminHostelListing['status'] }) {
-  const styles: Record<AdminHostelListing['status'], string> = {
-    DRAFT: 'bg-zinc-100 text-zinc-500',
-    PENDING_REVIEW: 'bg-amber-50 text-amber-700',
-    PUBLISHED: 'bg-emerald-50 text-emerald-700',
-    REJECTED: 'bg-red-50 text-red-700',
-    ARCHIVED: 'bg-zinc-100 text-zinc-500',
-  };
-  return (
-    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${styles[status]}`}>
-      {formatLabel(status)}
-    </span>
+    </Card>
   );
 }
